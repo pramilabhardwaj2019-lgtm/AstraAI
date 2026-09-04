@@ -20,6 +20,7 @@ input.addEventListener("keydown", function (event) {
     }
 });
 
+
 async function sendMessage() {
 
     const message = input.value.trim();
@@ -28,7 +29,6 @@ async function sendMessage() {
         return;
     }
 
-    // Create chat
     if (!currentChatId) {
         createNewChat(message);
     }
@@ -78,6 +78,7 @@ async function sendMessage() {
 
         const data = await response.json();
 
+
         thinkingMessage.innerHTML =
             formatAIResponse(data.reply);
 
@@ -88,6 +89,7 @@ async function sendMessage() {
         console.error(error);
 
         thinkingMessage.innerHTML = "";
+
         thinkingMessage.textContent =
             "Something went wrong 😕";
     }
@@ -110,60 +112,71 @@ function generateChatTitle(message) {
     const lower = text.toLowerCase();
 
 
-    // Common topics
     const topics = [
+
         {
             words: ["quantum", "physics"],
             title: "Quantum Physics"
         },
+
         {
             words: ["physics"],
             title: "Physics"
         },
+
         {
             words: ["chemistry"],
             title: "Chemistry"
         },
+
         {
             words: ["math", "mathematics"],
             title: "Mathematics"
         },
+
         {
             words: ["coding", "code", "javascript", "python"],
             title: "Coding"
         },
+
         {
             words: ["html", "css", "website"],
             title: "Website Help"
         },
+
         {
             words: ["history"],
             title: "History"
         },
+
         {
             words: ["recipe", "cooking", "food"],
             title: "Recipe & Cooking"
         },
+
         {
             words: ["study", "exam", "test", "syllabus"],
             title: "Study Help"
         },
+
         {
             words: ["nda"],
             title: "NDA Preparation"
         },
+
         {
             words: ["jee"],
             title: "JEE Preparation"
         },
+
         {
             words: ["neet"],
             title: "NEET Preparation"
         }
+
     ];
 
 
-    // Check topics
     for (const topic of topics) {
 
         if (
@@ -171,12 +184,14 @@ function generateChatTitle(message) {
                 lower.includes(word)
             )
         ) {
+
             return topic.title;
+
         }
+
     }
 
 
-    // Remove common question words
     const cleaned = text
         .replace(
             /^(tell me about|explain|what is|what are|how to|how do i|can you|please|help me with)\s+/i,
@@ -185,7 +200,6 @@ function generateChatTitle(message) {
         .trim();
 
 
-    // Capitalize words
     const words = cleaned
         .split(" ")
         .slice(0, 4)
@@ -222,6 +236,7 @@ function createNewChat(firstMessage) {
         title: generateChatTitle(firstMessage),
 
         messages: []
+
     };
 
     chats.unshift(chat);
@@ -292,21 +307,138 @@ function renderRecents() {
 
     chats.forEach(chat => {
 
+        const chatWrapper =
+            document.createElement("div");
+
+        chatWrapper.className =
+            "recent-chat-wrapper";
+
+
+        // Chat name
         const chatItem =
             document.createElement("button");
 
-        chatItem.className = "recent-chat";
+        chatItem.className =
+            "recent-chat";
 
-        chatItem.textContent = chat.title;
+        chatItem.textContent =
+            chat.title;
 
         chatItem.addEventListener(
             "click",
             () => loadChat(chat.id)
         );
 
-        recentChats.appendChild(chatItem);
+
+        // Three-dot menu
+        const menuButton =
+            document.createElement("button");
+
+        menuButton.className =
+            "chat-menu-button";
+
+        menuButton.textContent =
+            "⋯";
+
+
+        menuButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                showChatMenu(chat);
+
+            }
+        );
+
+
+        chatWrapper.appendChild(chatItem);
+
+        chatWrapper.appendChild(menuButton);
+
+        recentChats.appendChild(chatWrapper);
 
     });
+}
+
+
+// =========================
+// CHAT MENU
+// =========================
+
+function showChatMenu(chat) {
+
+    const action = prompt(
+        "Choose an option:\n\n" +
+        "1 = Rename\n" +
+        "2 = Delete"
+    );
+
+
+    // RENAME
+    if (action === "1") {
+
+        const newTitle = prompt(
+            "Enter new chat name:",
+            chat.title
+        );
+
+
+        if (
+            newTitle &&
+            newTitle.trim() !== ""
+        ) {
+
+            chat.title =
+                newTitle.trim();
+
+            saveChats();
+
+            renderRecents();
+
+        }
+
+    }
+
+
+    // DELETE
+    if (action === "2") {
+
+        const confirmed = confirm(
+            `Delete "${chat.title}"?`
+        );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        chats = chats.filter(
+            item => item.id !== chat.id
+        );
+
+
+        if (currentChatId === chat.id) {
+
+            currentChatId = null;
+
+            chatBox.innerHTML = `
+                <div class="message ai-message">
+                    Hello! 👋 How can I help you today?
+                </div>
+            `;
+
+        }
+
+
+        saveChats();
+
+        renderRecents();
+
+    }
+
 }
 
 
@@ -328,6 +460,7 @@ async function loadChat(chatId) {
 
     chatBox.innerHTML = "";
 
+
     chat.messages.forEach(message => {
 
         const messageElement =
@@ -338,15 +471,29 @@ async function loadChat(chatId) {
             message.type
         );
 
+
         if (message.type === "ai-message") {
-            messageElement.innerHTML = message.text;
+
+            messageElement.innerHTML =
+                message.text;
+
         } else {
-            messageElement.textContent = message.text;
+
+            messageElement.textContent =
+                message.text;
+
         }
 
-        chatBox.appendChild(messageElement);
+
+        chatBox.appendChild(
+            messageElement
+        );
 
     });
+
+
+    chatBox.scrollTop =
+        chatBox.scrollHeight;
 
     input.focus();
 
@@ -358,20 +505,26 @@ async function loadChat(chatId) {
             method: "POST"
         });
 
+
         for (const message of chat.messages) {
 
-            if (message.type === "user-message") {
+            if (
+                message.type ===
+                "user-message"
+            ) {
 
                 await fetch("/chat", {
 
                     method: "POST",
 
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type":
+                            "application/json"
                     },
 
                     body: JSON.stringify({
-                        message: message.text
+                        message:
+                            message.text
                     })
 
                 });
@@ -385,6 +538,7 @@ async function loadChat(chatId) {
         console.error(error);
 
     }
+
 }
 
 
@@ -392,34 +546,39 @@ async function loadChat(chatId) {
 // NEW CHAT
 // =========================
 
-newChatButton.addEventListener("click", async function () {
+newChatButton.addEventListener(
+    "click",
+    async function () {
 
-    try {
+        try {
 
-        await fetch("/new-chat", {
-            method: "POST"
-        });
+            await fetch("/new-chat", {
+                method: "POST"
+            });
 
-    } catch (error) {
+        } catch (error) {
 
-        console.error(error);
+            console.error(error);
+
+        }
+
+
+        currentChatId = null;
+
+
+        chatBox.innerHTML = `
+            <div class="message ai-message">
+                Hello! 👋 How can I help you today?
+            </div>
+        `;
+
+
+        input.value = "";
+
+        input.focus();
 
     }
-
-    currentChatId = null;
-
-    chatBox.innerHTML = `
-        <div class="message ai-message">
-            Hello! 👋 How can I help you today?
-        </div>
-    `;
-
-    input.value = "";
-
-    input.focus();
-
-    renderRecents();
-});
+);
 
 
 // =========================
@@ -436,9 +595,12 @@ function addMessage(text, className) {
         className
     );
 
-    messageElement.textContent = text;
+    messageElement.textContent =
+        text;
 
-    chatBox.appendChild(messageElement);
+    chatBox.appendChild(
+        messageElement
+    );
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
@@ -453,26 +615,36 @@ function formatAIResponse(text) {
 
     let formatted = text;
 
+
+    // Escape HTML
     formatted = formatted
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
+
+    // Code blocks
     formatted = formatted.replace(
         /```([\s\S]*?)```/g,
         "<pre><code>$1</code></pre>"
     );
 
+
+    // Bold
     formatted = formatted.replace(
         /\*\*(.*?)\*\*/g,
         "<strong>$1</strong>"
     );
 
+
+    // Italic
     formatted = formatted.replace(
         /\*(.*?)\*/g,
         "<em>$1</em>"
     );
 
+
+    // Headings
     formatted = formatted.replace(
         /^### (.*)$/gm,
         "<h3>$1</h3>"
@@ -488,16 +660,21 @@ function formatAIResponse(text) {
         "<h1>$1</h1>"
     );
 
+
+    // Bullet points
     formatted = formatted.replace(
         /^\s*[-•] (.*)$/gm,
         "<li>$1</li>"
     );
+
 
     formatted = formatted.replace(
         /(<li>.*<\/li>)/gs,
         "<ul>$1</ul>"
     );
 
+
+    // Line breaks
     formatted = formatted.replace(
         /\n\n/g,
         "<br><br>"
@@ -507,6 +684,7 @@ function formatAIResponse(text) {
         /\n/g,
         "<br>"
     );
+
 
     return formatted;
 }
