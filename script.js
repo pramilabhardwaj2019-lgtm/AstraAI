@@ -29,7 +29,6 @@ async function sendMessage() {
         return;
     }
 
-    // Create chat if needed
     if (!currentChatId) {
         createNewChat(message);
     }
@@ -39,6 +38,7 @@ async function sendMessage() {
     input.value = "";
 
     saveCurrentChat();
+
 
     // Thinking animation
     const thinkingMessage = document.createElement("div");
@@ -78,8 +78,14 @@ async function sendMessage() {
 
         const data = await response.json();
 
+
+        // Remove thinking animation
         thinkingMessage.innerHTML = "";
-        thinkingMessage.textContent = data.reply;
+
+        // Render AI Markdown
+        thinkingMessage.innerHTML =
+            formatAIResponse(data.reply);
+
 
         saveCurrentChat();
 
@@ -93,6 +99,94 @@ async function sendMessage() {
     }
 
     chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+
+// =========================
+// MARKDOWN FORMATTER
+// =========================
+
+function formatAIResponse(text) {
+
+    let formatted = text;
+
+    // Escape HTML
+    formatted = formatted
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+
+    // Code blocks
+    formatted = formatted.replace(
+        /```([\s\S]*?)```/g,
+        "<pre><code>$1</code></pre>"
+    );
+
+
+    // Bold
+    formatted = formatted.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+
+    // Italic
+    formatted = formatted.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
+
+
+    // Headings
+    formatted = formatted.replace(
+        /^### (.*)$/gm,
+        "<h3>$1</h3>"
+    );
+
+    formatted = formatted.replace(
+        /^## (.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+    formatted = formatted.replace(
+        /^# (.*)$/gm,
+        "<h1>$1</h1>"
+    );
+
+
+    // Bullet points
+    formatted = formatted.replace(
+        /^\s*[-•] (.*)$/gm,
+        "<li>$1</li>"
+    );
+
+    formatted = formatted.replace(
+        /(<li>.*<\/li>)/gs,
+        "<ul>$1</ul>"
+    );
+
+
+    // Numbered lists
+    formatted = formatted.replace(
+        /^\s*\d+\.\s+(.*)$/gm,
+        "<li>$1</li>"
+    );
+
+
+    // Line breaks
+    formatted = formatted.replace(
+        /\n\n/g,
+        "<br><br>"
+    );
+
+    formatted = formatted.replace(
+        /\n/g,
+        "<br>"
+    );
+
+
+    return formatted;
 }
 
 
@@ -177,7 +271,7 @@ function saveCurrentChat() {
         chatBox.querySelectorAll(".message")
     ).map(message => ({
 
-        text: message.textContent,
+        text: message.innerHTML,
 
         type:
             message.classList.contains("user-message")
@@ -251,10 +345,21 @@ async function loadChat(chatId) {
 
     chat.messages.forEach(message => {
 
-        addMessage(
-            message.text,
+        const messageElement =
+            document.createElement("div");
+
+        messageElement.classList.add(
+            "message",
             message.type
         );
+
+        if (message.type === "ai-message") {
+            messageElement.innerHTML = message.text;
+        } else {
+            messageElement.textContent = message.text;
+        }
+
+        chatBox.appendChild(messageElement);
 
     });
 
