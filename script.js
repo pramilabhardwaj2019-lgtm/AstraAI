@@ -20,7 +20,6 @@ input.addEventListener("keydown", function (event) {
     }
 });
 
-
 async function sendMessage() {
 
     const message = input.value.trim();
@@ -29,6 +28,7 @@ async function sendMessage() {
         return;
     }
 
+    // Create chat
     if (!currentChatId) {
         createNewChat(message);
     }
@@ -78,14 +78,8 @@ async function sendMessage() {
 
         const data = await response.json();
 
-
-        // Remove thinking animation
-        thinkingMessage.innerHTML = "";
-
-        // Render AI Markdown
         thinkingMessage.innerHTML =
             formatAIResponse(data.reply);
-
 
         saveCurrentChat();
 
@@ -103,126 +97,120 @@ async function sendMessage() {
 
 
 // =========================
-// MARKDOWN FORMATTER
+// SMART CHAT TITLE
 // =========================
 
-function formatAIResponse(text) {
+function generateChatTitle(message) {
 
-    let formatted = text;
+    const text = message
+        .trim()
+        .replace(/[?!.,]/g, "")
+        .replace(/\s+/g, " ");
 
-    // Escape HTML
-    formatted = formatted
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-
-    // Code blocks
-    formatted = formatted.replace(
-        /```([\s\S]*?)```/g,
-        "<pre><code>$1</code></pre>"
-    );
+    const lower = text.toLowerCase();
 
 
-    // Bold
-    formatted = formatted.replace(
-        /\*\*(.*?)\*\*/g,
-        "<strong>$1</strong>"
-    );
+    // Common topics
+    const topics = [
+        {
+            words: ["quantum", "physics"],
+            title: "Quantum Physics"
+        },
+        {
+            words: ["physics"],
+            title: "Physics"
+        },
+        {
+            words: ["chemistry"],
+            title: "Chemistry"
+        },
+        {
+            words: ["math", "mathematics"],
+            title: "Mathematics"
+        },
+        {
+            words: ["coding", "code", "javascript", "python"],
+            title: "Coding"
+        },
+        {
+            words: ["html", "css", "website"],
+            title: "Website Help"
+        },
+        {
+            words: ["history"],
+            title: "History"
+        },
+        {
+            words: ["recipe", "cooking", "food"],
+            title: "Recipe & Cooking"
+        },
+        {
+            words: ["study", "exam", "test", "syllabus"],
+            title: "Study Help"
+        },
+        {
+            words: ["nda"],
+            title: "NDA Preparation"
+        },
+        {
+            words: ["jee"],
+            title: "JEE Preparation"
+        },
+        {
+            words: ["neet"],
+            title: "NEET Preparation"
+        }
+    ];
 
 
-    // Italic
-    formatted = formatted.replace(
-        /\*(.*?)\*/g,
-        "<em>$1</em>"
-    );
+    // Check topics
+    for (const topic of topics) {
+
+        if (
+            topic.words.some(word =>
+                lower.includes(word)
+            )
+        ) {
+            return topic.title;
+        }
+    }
 
 
-    // Headings
-    formatted = formatted.replace(
-        /^### (.*)$/gm,
-        "<h3>$1</h3>"
-    );
-
-    formatted = formatted.replace(
-        /^## (.*)$/gm,
-        "<h2>$1</h2>"
-    );
-
-    formatted = formatted.replace(
-        /^# (.*)$/gm,
-        "<h1>$1</h1>"
-    );
+    // Remove common question words
+    const cleaned = text
+        .replace(
+            /^(tell me about|explain|what is|what are|how to|how do i|can you|please|help me with)\s+/i,
+            ""
+        )
+        .trim();
 
 
-    // Bullet points
-    formatted = formatted.replace(
-        /^\s*[-•] (.*)$/gm,
-        "<li>$1</li>"
-    );
-
-    formatted = formatted.replace(
-        /(<li>.*<\/li>)/gs,
-        "<ul>$1</ul>"
-    );
+    // Capitalize words
+    const words = cleaned
+        .split(" ")
+        .slice(0, 4)
+        .map(word =>
+            word.charAt(0).toUpperCase() +
+            word.slice(1)
+        );
 
 
-    // Numbered lists
-    formatted = formatted.replace(
-        /^\s*\d+\.\s+(.*)$/gm,
-        "<li>$1</li>"
-    );
+    let title = words.join(" ");
 
 
-    // Line breaks
-    formatted = formatted.replace(
-        /\n\n/g,
-        "<br><br>"
-    );
-
-    formatted = formatted.replace(
-        /\n/g,
-        "<br>"
-    );
+    if (!title) {
+        title = "New Chat";
+    }
 
 
-    return formatted;
+    return title.length > 28
+        ? title.substring(0, 28) + "..."
+        : title;
 }
 
 
 // =========================
-// NEW CHAT
-// =========================
-
-newChatButton.addEventListener("click", async function () {
-
-    try {
-
-        await fetch("/new-chat", {
-            method: "POST"
-        });
-
-    } catch (error) {
-        console.error(error);
-    }
-
-    currentChatId = null;
-
-    chatBox.innerHTML = `
-        <div class="message ai-message">
-            Hello! 👋 How can I help you today?
-        </div>
-    `;
-
-    input.value = "";
-    input.focus();
-
-    renderRecents();
-});
-
-
-// =========================
-// CREATE CHAT
+// CREATE NEW CHAT
 // =========================
 
 function createNewChat(firstMessage) {
@@ -231,10 +219,7 @@ function createNewChat(firstMessage) {
 
         id: Date.now(),
 
-        title:
-            firstMessage.length > 30
-                ? firstMessage.substring(0, 30) + "..."
-                : firstMessage,
+        title: generateChatTitle(firstMessage),
 
         messages: []
     };
@@ -404,6 +389,40 @@ async function loadChat(chatId) {
 
 
 // =========================
+// NEW CHAT
+// =========================
+
+newChatButton.addEventListener("click", async function () {
+
+    try {
+
+        await fetch("/new-chat", {
+            method: "POST"
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+    currentChatId = null;
+
+    chatBox.innerHTML = `
+        <div class="message ai-message">
+            Hello! 👋 How can I help you today?
+        </div>
+    `;
+
+    input.value = "";
+
+    input.focus();
+
+    renderRecents();
+});
+
+
+// =========================
 // ADD MESSAGE
 // =========================
 
@@ -423,6 +442,73 @@ function addMessage(text, className) {
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
+}
+
+
+// =========================
+// MARKDOWN FORMATTER
+// =========================
+
+function formatAIResponse(text) {
+
+    let formatted = text;
+
+    formatted = formatted
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    formatted = formatted.replace(
+        /```([\s\S]*?)```/g,
+        "<pre><code>$1</code></pre>"
+    );
+
+    formatted = formatted.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+    formatted = formatted.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
+
+    formatted = formatted.replace(
+        /^### (.*)$/gm,
+        "<h3>$1</h3>"
+    );
+
+    formatted = formatted.replace(
+        /^## (.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+    formatted = formatted.replace(
+        /^# (.*)$/gm,
+        "<h1>$1</h1>"
+    );
+
+    formatted = formatted.replace(
+        /^\s*[-•] (.*)$/gm,
+        "<li>$1</li>"
+    );
+
+    formatted = formatted.replace(
+        /(<li>.*<\/li>)/gs,
+        "<ul>$1</ul>"
+    );
+
+    formatted = formatted.replace(
+        /\n\n/g,
+        "<br><br>"
+    );
+
+    formatted = formatted.replace(
+        /\n/g,
+        "<br>"
+    );
+
+    return formatted;
 }
 
 
