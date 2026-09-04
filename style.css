@@ -8,6 +8,7 @@ body {
     font-family: Arial, sans-serif;
     background: #f7f7f8;
     height: 100vh;
+    color: #222;
 }
 
 .chat-container {
@@ -17,40 +18,81 @@ body {
     flex-direction: column;
 }
 
-/* Header */
+/* ===============================
+   HEADER
+   =============================== */
+
 .chat-header {
-    height: 65px;
+    height: 70px;
     background: #ffffff;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #e5e5e5;
+
     display: flex;
     align-items: center;
-    padding: 0 25px;
+    justify-content: space-between;
+
+    padding: 0 28px;
 }
 
 .chat-header h1 {
-    font-size: 20px;
-    color: #222;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
 }
 
 .chat-header p {
     display: none;
 }
 
-/* Chat area */
+/* ===============================
+   NEW CHAT BUTTON
+   =============================== */
+
+#new-chat-button {
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #222;
+
+    padding: 9px 15px;
+    border-radius: 9px;
+
+    font-size: 14px;
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+#new-chat-button:hover {
+    background: #f1f1f1;
+}
+
+/* ===============================
+   CHAT AREA
+   =============================== */
+
 .chat-box {
     flex: 1;
     overflow-y: auto;
-    padding: 30px 20%;
+
+    padding: 35px 20%;
 }
 
-/* Messages */
+/* ===============================
+   MESSAGES
+   =============================== */
+
 .message {
     max-width: 750px;
     margin: 0 auto 25px auto;
+
     padding: 14px 18px;
-    border-radius: 12px;
+
+    border-radius: 14px;
+
     line-height: 1.6;
     font-size: 16px;
+
+    word-wrap: break-word;
 }
 
 .ai-message {
@@ -60,59 +102,81 @@ body {
 
 .user-message {
     background: #e8f0fe;
+    border: 1px solid #d7e3fa;
 }
 
-/* Input area */
+/* ===============================
+   INPUT AREA
+   =============================== */
+
 .input-area {
-    width: 60%;
+    width: 65%;
+    max-width: 850px;
+
     margin: 0 auto 25px auto;
+
     display: flex;
-    gap: 10px;
-    background: white;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 15px;
+    gap: 8px;
+
+    background: #ffffff;
+
+    padding: 9px;
+
+    border: 1px solid #d5d5d5;
+    border-radius: 16px;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 #user-input {
     flex: 1;
+
     border: none;
     outline: none;
+
     font-size: 16px;
-    padding: 10px;
+
+    padding: 11px 13px;
+
+    background: transparent;
 }
+
+#user-input::placeholder {
+    color: #999;
+}
+
+/* ===============================
+   SEND BUTTON
+   =============================== */
 
 #send-button {
     border: none;
+
     background: #222;
     color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
+
+    padding: 11px 20px;
+
+    border-radius: 11px;
+
     cursor: pointer;
+
     font-size: 15px;
+    font-weight: 500;
+
+    transition: 0.2s;
 }
 
 #send-button:hover {
     background: #444;
 }
 
-/* Mobile */
-@media (max-width: 700px) {
-
-    .chat-box {
-        padding: 20px 10px;
-    }
-
-    .input-area {
-        width: 95%;
-    }
-
-    .message {
-        max-width: 100%;
-    }
+#send-button:active {
+    transform: scale(0.97);
 }
+
 /* ===============================
-   🤖 Thinking Animation
+   THINKING ANIMATION
    =============================== */
 
 .thinking-message {
@@ -122,15 +186,16 @@ body {
     width: fit-content;
 }
 
-
 .dot {
     width: 7px;
     height: 7px;
+
     background: #555;
+
     border-radius: 50%;
+
     animation: thinking 1.4s infinite ease-in-out;
 }
-
 
 .dot:nth-child(1) {
     animation-delay: 0s;
@@ -144,9 +209,7 @@ body {
     animation-delay: 0.4s;
 }
 
-
 @keyframes thinking {
-
     0%, 60%, 100% {
         transform: translateY(0);
         opacity: 0.4;
@@ -156,5 +219,56 @@ body {
         transform: translateY(-5px);
         opacity: 1;
     }
+}
 
+/* ===============================
+   SCROLLBAR
+   =============================== */
+
+.chat-box::-webkit-scrollbar {
+    width: 7px;
+}
+
+.chat-box::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+/* ===============================
+   MOBILE
+   =============================== */
+
+@media (max-width: 700px) {
+
+    .chat-header {
+        padding: 0 15px;
+        height: 60px;
+    }
+
+    .chat-header h1 {
+        font-size: 18px;
+    }
+
+    #new-chat-button {
+        padding: 8px 11px;
+        font-size: 13px;
+    }
+
+    .chat-box {
+        padding: 20px 10px;
+    }
+
+    .message {
+        max-width: 100%;
+        font-size: 15px;
+    }
+
+    .input-area {
+        width: 94%;
+        margin-bottom: 15px;
+    }
+
+    #send-button {
+        padding: 10px 15px;
+    }
 }
