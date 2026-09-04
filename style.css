@@ -472,3 +472,44 @@ body {
     }
 
 }
+.recent-chat-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-radius: 7px;
+}
+
+.recent-chat-wrapper:hover {
+    background: #e9e9e9;
+}
+
+.recent-chat {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-menu-button {
+    width: 32px;
+    height: 32px;
+
+    border: none;
+    background: transparent;
+
+    color: #777;
+
+    font-size: 20px;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    opacity: 0;
+}
+
+.recent-chat-wrapper:hover .chat-menu-button {
+    opacity: 1;
+}
+
+.chat-menu-button:hover {
+    background: #dcdcdc;
+}
