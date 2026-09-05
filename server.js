@@ -3,28 +3,55 @@ const path = require("path");
 require("dotenv").config();
 
 const Groq = require("groq-sdk");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
 
 // 🌐 Hosting-compatible port
 const PORT = process.env.PORT || 3000;
 
+
+// ===============================
+// 🤖 GROQ
+// ===============================
+
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
 
 
-// 🧠 Chat memory
+// ===============================
+// 🧠 AI CHAT MEMORY
+// ===============================
+
 let chatHistory = [];
 
 
-app.use(express.json());
+// ===============================
+// 🚀 HTTP + SOCKET.IO SERVER
+// ===============================
 
-app.use(express.static(__dirname));
+const server = http.createServer(app);
+
+const io = new Server(server);
 
 
 // ===============================
-// 🤖 Generate AI Response
+// 📁 FRONTEND
+// ===============================
+
+app.use(express.json());
+
+app.use(
+    express.static(
+        path.join(__dirname, "frontend")
+    )
+);
+
+
+// ===============================
+// 🤖 GENERATE AI RESPONSE
 // ===============================
 
 async function generateReply(message) {
@@ -37,20 +64,22 @@ async function generateReply(message) {
 
             {
                 role: "system",
+
                 content:
-    "You are AstraAI, a helpful and friendly AI assistant. " +
-    "Reply in the same language/style as the user. " +
-    "If the user writes in Hinglish, reply in natural Hinglish. " +
-    "If the user writes in Hindi, reply in Hindi. " +
-    "If the user writes in English, reply in English. " +
-    "Give concise, easy-to-understand answers. " +
-    "For normal questions, answer in 3-6 short paragraphs or bullet points. " +
-    "Do not make answers unnecessarily long. " +
-    "Use Markdown when helpful. " +
-    "You were created by Prashant Bhardwaj. " +
-    "If someone asks who created you, who your creator is, " +
-    "or who made you, always answer that you were created " +
-    "by Prashant Bhardwaj."
+                    "You are AstraAI, a helpful and friendly AI assistant. " +
+                    "Reply in the same language/style as the user. " +
+                    "If the user writes in Hinglish, reply in natural Hinglish. " +
+                    "If the user writes in Hindi, reply in Hindi. " +
+                    "If the user writes in English, reply in English. " +
+                    "Give concise, easy-to-understand answers. " +
+                    "For normal questions, answer in 3-6 short paragraphs or bullet points. " +
+                    "Do not make answers unnecessarily long. " +
+                    "Use Markdown when helpful. " +
+                    "You were created by Prashant Bhardwaj. " +
+                    "If someone asks who created you, who your creator is, " +
+                    "or who made you, always answer that you were created " +
+                    "by Prashant Bhardwaj."
+            },
 
             ...chatHistory,
 
@@ -62,21 +91,25 @@ async function generateReply(message) {
         ];
 
 
-        const completion = await groq.chat.completions.create({
+        const completion =
+            await groq.chat.completions.create({
 
-            model: "openai/gpt-oss-20b",
+                model: "openai/gpt-oss-20b",
 
-            messages: messages
+                messages: messages
 
-        });
+            });
 
 
-        const reply = completion.choices[0].message.content;
+        const reply =
+            completion.choices[0].message.content;
+
 
         console.log("Groq replied!");
 
 
-        // 🧠 Save user message
+        // 🧠 Save conversation
+
         chatHistory.push({
 
             role: "user",
@@ -86,7 +119,6 @@ async function generateReply(message) {
         });
 
 
-        // 🧠 Save AI response
         chatHistory.push({
 
             role: "assistant",
@@ -101,7 +133,10 @@ async function generateReply(message) {
 
     } catch (error) {
 
-        console.error("GROQ ERROR:", error);
+        console.error(
+            "GROQ ERROR:",
+            error
+        );
 
         throw error;
 
@@ -111,7 +146,7 @@ async function generateReply(message) {
 
 
 // ===============================
-// 💬 Chat API
+// 💬 AI CHAT API
 // ===============================
 
 app.post("/chat", async (req, res) => {
@@ -124,21 +159,24 @@ app.post("/chat", async (req, res) => {
 
     try {
 
-        const message = req.body.message;
+        const message =
+            req.body.message;
 
 
         if (!message) {
 
             return res.status(400).json({
 
-                reply: "Please type a message."
+                reply:
+                    "Please type a message."
 
             });
 
         }
 
 
-        const reply = await generateReply(message);
+        const reply =
+            await generateReply(message);
 
 
         res.json({
@@ -152,7 +190,8 @@ app.post("/chat", async (req, res) => {
 
         res.status(500).json({
 
-            reply: "AI abhi response nahi de pa raha 😕"
+            reply:
+                "AI abhi response nahi de pa raha 😕"
 
         });
 
@@ -162,7 +201,7 @@ app.post("/chat", async (req, res) => {
 
 
 // ===============================
-// 🆕 New Chat
+// 🆕 NEW AI CHAT
 // ===============================
 
 app.post("/new-chat", (req, res) => {
@@ -170,7 +209,9 @@ app.post("/new-chat", (req, res) => {
     chatHistory = [];
 
 
-    console.log("NEW CHAT STARTED");
+    console.log(
+        "NEW CHAT STARTED"
+    );
 
 
     res.json({
@@ -183,13 +224,127 @@ app.post("/new-chat", (req, res) => {
 
 
 // ===============================
-// 🚀 Start Server
+// 🌐 LIVE CHAT
 // ===============================
 
-app.listen(PORT, "0.0.0.0", () => {
+let onlineUsers = 0;
+
+
+io.on("connection", (socket) => {
+
+    onlineUsers++;
 
     console.log(
-        `Server running at http://localhost:${PORT}`
+        "User connected:",
+        socket.id
+    );
+
+
+    // 👥 Send online users count
+
+    io.emit(
+        "online-users",
+        onlineUsers
+    );
+
+
+    // 💬 Receive live message
+
+    socket.on(
+        "live-message",
+        (data) => {
+
+            if (!data) {
+                return;
+            }
+
+
+            const username =
+                data.username ||
+                "Anonymous";
+
+
+            const message =
+                data.message;
+
+
+            if (
+                !message ||
+                message.trim() === ""
+            ) {
+                return;
+            }
+
+
+            // 📢 Send message to everyone
+
+            io.emit(
+                "live-message",
+                {
+
+                    username:
+                        username,
+
+                    message:
+                        message,
+
+                    time:
+                        new Date()
+                            .toLocaleTimeString(
+                                [],
+                                {
+                                    hour:
+                                        "2-digit",
+
+                                    minute:
+                                        "2-digit"
+                                }
+                            )
+
+                }
+            );
+
+        }
+    );
+
+
+    // 🔴 User disconnected
+
+    socket.on(
+        "disconnect",
+        () => {
+
+            onlineUsers--;
+
+            console.log(
+                "User disconnected:",
+                socket.id
+            );
+
+
+            io.emit(
+                "online-users",
+                onlineUsers
+            );
+
+        }
     );
 
 });
+
+
+// ===============================
+// 🚀 START SERVER
+// ===============================
+
+server.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
+
+        console.log(
+            `Server running at http://localhost:${PORT}`
+        );
+
+    }
+);
