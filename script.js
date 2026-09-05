@@ -15,9 +15,11 @@ let currentChatId = null;
 button.addEventListener("click", sendMessage);
 
 input.addEventListener("keydown", function (event) {
+
     if (event.key === "Enter") {
         sendMessage();
     }
+
 });
 
 
@@ -29,9 +31,12 @@ async function sendMessage() {
         return;
     }
 
+
+    // Create new chat if needed
     if (!currentChatId) {
         createNewChat(message);
     }
+
 
     addMessage(message, "user-message");
 
@@ -41,7 +46,8 @@ async function sendMessage() {
 
 
     // Thinking animation
-    const thinkingMessage = document.createElement("div");
+    const thinkingMessage =
+        document.createElement("div");
 
     thinkingMessage.classList.add(
         "message",
@@ -49,15 +55,18 @@ async function sendMessage() {
         "thinking-message"
     );
 
+
     thinkingMessage.innerHTML = `
         <span class="dot"></span>
         <span class="dot"></span>
         <span class="dot"></span>
     `;
 
+
     chatBox.appendChild(thinkingMessage);
 
-    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBox.scrollTop =
+        chatBox.scrollHeight;
 
 
     try {
@@ -76,13 +85,24 @@ async function sendMessage() {
 
         });
 
+
         const data = await response.json();
 
 
+        // AI response
         thinkingMessage.innerHTML =
             formatAIResponse(data.reply);
 
+
+        // Add Copy + Regenerate
+        addResponseButtons(
+            thinkingMessage,
+            message
+        );
+
+
         saveCurrentChat();
+
 
     } catch (error) {
 
@@ -92,9 +112,12 @@ async function sendMessage() {
 
         thinkingMessage.textContent =
             "Something went wrong 😕";
+
     }
 
-    chatBox.scrollTop = chatBox.scrollHeight;
+
+    chatBox.scrollTop =
+        chatBox.scrollHeight;
 }
 
 
@@ -108,6 +131,7 @@ function generateChatTitle(message) {
         .trim()
         .replace(/[?!.,]/g, "")
         .replace(/\s+/g, " ");
+
 
     const lower = text.toLowerCase();
 
@@ -135,12 +159,21 @@ function generateChatTitle(message) {
         },
 
         {
-            words: ["coding", "code", "javascript", "python"],
+            words: [
+                "coding",
+                "code",
+                "javascript",
+                "python"
+            ],
             title: "Coding"
         },
 
         {
-            words: ["html", "css", "website"],
+            words: [
+                "html",
+                "css",
+                "website"
+            ],
             title: "Website Help"
         },
 
@@ -150,12 +183,21 @@ function generateChatTitle(message) {
         },
 
         {
-            words: ["recipe", "cooking", "food"],
+            words: [
+                "recipe",
+                "cooking",
+                "food"
+            ],
             title: "Recipe & Cooking"
         },
 
         {
-            words: ["study", "exam", "test", "syllabus"],
+            words: [
+                "study",
+                "exam",
+                "test",
+                "syllabus"
+            ],
             title: "Study Help"
         },
 
@@ -224,7 +266,7 @@ function generateChatTitle(message) {
 
 
 // =========================
-// CREATE NEW CHAT
+// CREATE CHAT
 // =========================
 
 function createNewChat(firstMessage) {
@@ -233,11 +275,13 @@ function createNewChat(firstMessage) {
 
         id: Date.now(),
 
-        title: generateChatTitle(firstMessage),
+        title:
+            generateChatTitle(firstMessage),
 
         messages: []
 
     };
+
 
     chats.unshift(chat);
 
@@ -259,13 +303,16 @@ function saveCurrentChat() {
         return;
     }
 
+
     const chat = chats.find(
         chat => chat.id === currentChatId
     );
 
+
     if (!chat) {
         return;
     }
+
 
     chat.messages = Array.from(
         chatBox.querySelectorAll(".message")
@@ -274,11 +321,14 @@ function saveCurrentChat() {
         text: message.innerHTML,
 
         type:
-            message.classList.contains("user-message")
+            message.classList.contains(
+                "user-message"
+            )
                 ? "user-message"
                 : "ai-message"
 
     }));
+
 
     saveChats();
 }
@@ -305,6 +355,7 @@ function renderRecents() {
 
     recentChats.innerHTML = "";
 
+
     chats.forEach(chat => {
 
         const chatWrapper =
@@ -324,13 +375,14 @@ function renderRecents() {
         chatItem.textContent =
             chat.title;
 
+
         chatItem.addEventListener(
             "click",
             () => loadChat(chat.id)
         );
 
 
-        // Three-dot menu
+        // Three dot
         const menuButton =
             document.createElement("button");
 
@@ -364,7 +416,7 @@ function renderRecents() {
 
 
 // =========================
-// CHAT MENU
+// RENAME / DELETE MENU
 // =========================
 
 function showChatMenu(chat) {
@@ -452,9 +504,11 @@ async function loadChat(chatId) {
         chat => chat.id === chatId
     );
 
+
     if (!chat) {
         return;
     }
+
 
     currentChatId = chatId;
 
@@ -466,13 +520,17 @@ async function loadChat(chatId) {
         const messageElement =
             document.createElement("div");
 
+
         messageElement.classList.add(
             "message",
             message.type
         );
 
 
-        if (message.type === "ai-message") {
+        if (
+            message.type ===
+            "ai-message"
+        ) {
 
             messageElement.innerHTML =
                 message.text;
@@ -490,6 +548,37 @@ async function loadChat(chatId) {
         );
 
     });
+
+
+    // Add buttons to loaded AI messages
+    chatBox
+        .querySelectorAll(".ai-message")
+        .forEach((messageElement, index) => {
+
+            const userMessages =
+                chat.messages.filter(
+                    message =>
+                        message.type ===
+                        "user-message"
+                );
+
+
+            const question =
+                userMessages[index]
+                    ? userMessages[index].text
+                    : "";
+
+
+            if (question) {
+
+                addResponseButtons(
+                    messageElement,
+                    question
+                );
+
+            }
+
+        });
 
 
     chatBox.scrollTop =
@@ -590,17 +679,21 @@ function addMessage(text, className) {
     const messageElement =
         document.createElement("div");
 
+
     messageElement.classList.add(
         "message",
         className
     );
 
+
     messageElement.textContent =
         text;
+
 
     chatBox.appendChild(
         messageElement
     );
+
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
@@ -650,10 +743,12 @@ function formatAIResponse(text) {
         "<h3>$1</h3>"
     );
 
+
     formatted = formatted.replace(
         /^## (.*)$/gm,
         "<h2>$1</h2>"
     );
+
 
     formatted = formatted.replace(
         /^# (.*)$/gm,
@@ -680,6 +775,7 @@ function formatAIResponse(text) {
         "<br><br>"
     );
 
+
     formatted = formatted.replace(
         /\n/g,
         "<br>"
@@ -687,6 +783,185 @@ function formatAIResponse(text) {
 
 
     return formatted;
+}
+
+
+// =========================
+// COPY + REGENERATE
+// =========================
+
+function addResponseButtons(
+    aiMessage,
+    originalQuestion
+) {
+
+    // Don't add twice
+    if (
+        aiMessage.querySelector(
+            ".response-buttons"
+        )
+    ) {
+        return;
+    }
+
+
+    const buttons =
+        document.createElement("div");
+
+
+    buttons.className =
+        "response-buttons";
+
+
+    buttons.innerHTML = `
+        <button
+            class="copy-btn"
+            title="Copy response">
+            📋
+        </button>
+
+        <button
+            class="regenerate-btn"
+            title="Regenerate">
+            🔄
+        </button>
+    `;
+
+
+    aiMessage.appendChild(buttons);
+
+
+    // COPY
+    buttons
+        .querySelector(".copy-btn")
+        .addEventListener(
+            "click",
+            async function () {
+
+                const copyButton =
+                    this;
+
+
+                const clone =
+                    aiMessage.cloneNode(true);
+
+
+                const actionButtons =
+                    clone.querySelector(
+                        ".response-buttons"
+                    );
+
+
+                if (actionButtons) {
+                    actionButtons.remove();
+                }
+
+
+                const text =
+                    clone.innerText.trim();
+
+
+                try {
+
+                    await navigator
+                        .clipboard
+                        .writeText(text);
+
+
+                    copyButton.textContent =
+                        "✓";
+
+
+                    setTimeout(() => {
+
+                        copyButton.textContent =
+                            "📋";
+
+                    }, 1500);
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+                }
+
+            }
+        );
+
+
+    // REGENERATE
+    buttons
+        .querySelector(
+            ".regenerate-btn"
+        )
+        .addEventListener(
+            "click",
+            async function () {
+
+                const regenerateButton =
+                    this;
+
+
+                regenerateButton.textContent =
+                    "⏳";
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/chat",
+                            {
+
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify({
+                                        message:
+                                            originalQuestion
+                                    })
+
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    aiMessage.innerHTML =
+                        formatAIResponse(
+                            data.reply
+                        );
+
+
+                    addResponseButtons(
+                        aiMessage,
+                        originalQuestion
+                    );
+
+
+                    saveCurrentChat();
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    regenerateButton.textContent =
+                        "🔄";
+
+                }
+
+            }
+        );
+
 }
 
 
